@@ -2,19 +2,14 @@ import os
 from openai import OpenAI, AssistantEventHandler
 
 class EventHandler(AssistantEventHandler):
-    def __init__(self):
-        super().__init__()
-        self.messages = []
-
-    def on_text_created(self, text):
-        self.messages.append(text.value)  # Ensure only the string value is appended
-        print(f"\nassistant > {text.value}", flush=True)
+    def on_text_created(self, text): pass
+        # print(f"\nassistant > ", flush=True)
       
-    def on_text_delta(self, delta, snapshot):
-        print(delta.value, end="", flush=True)
+    def on_text_delta(self, delta, snapshot): pass
+        # print(delta.value, end="", flush=True)
       
-    def on_tool_call_created(self, tool_call):
-        print(f"\nassistant > {tool_call.type}\n", flush=True)
+    def on_tool_call_created(self, tool_call): pass
+        # print(f"\nassistant > {tool_call.type}\n", flush=True)
   
     def on_tool_call_delta(self, delta, snapshot):
         if delta.type == 'code_interpreter':
@@ -59,8 +54,7 @@ def send_message(message):
         instructions=assistant.instructions,
         event_handler=event_handler,
     ) as stream:
-        for _ in stream:
-            pass  # This line ensures the stream runs to completion
-
-    for msg in event_handler.messages:
-        yield msg
+        for chunk in stream:
+            if hasattr(chunk.data, "delta"): 
+                yield chunk.data.delta.content[0].text.value
+                # print(chunk.data.delta.content[0].text.value)

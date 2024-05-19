@@ -65,6 +65,7 @@ func _process(delta):
 		
 	httpclient.poll()
 	var httpclient_status = httpclient.get_status()
+	print(httpclient_status)
 	if outgoing_request:
 		if !is_requested:
 			if !request_in_progress:
@@ -85,16 +86,16 @@ func _process(delta):
 		var json = JSON.new()
 		var body = response_body.get_string_from_utf8()
 		if body:
-			print(body)
 			var event_data = get_event_data(body)
-			if event_data.event != "keep-alive" or event_data.event != continue_internal:
-				var result = event_data.data
-				if response_body.size() > 0 and result: # stop here if the value doesn't parse
-					response_body.resize(0)
-					emit_signal("new_sse_event", headers, event_data.event, result)
-			else:
-				if event_data.event != continue_internal:
-					response_body.resize(0)
+			print(body, event_data)
+			#if event_data.event != "keep-alive" or event_data.event != continue_internal:
+				#var result = event_data.data
+				#if response_body.size() > 0 and result: # stop here if the value doesn't parse
+					#response_body.resize(0)
+					#emit_signal("new_sse_event", headers, event_data.event, result)
+			#else:
+				#if event_data.event != continue_internal:
+					#response_body.resize(0)
 
 func set_outgoing_request(method, url, headers, body):
 	if not outgoing_request:

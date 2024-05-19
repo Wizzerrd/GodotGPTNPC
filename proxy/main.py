@@ -18,12 +18,13 @@ def post_message():
     def generate():
         try:
             for chunk in send_message(message):
+                print(chunk)
                 # Ensure each chunk is encoded as bytes
                 yield chunk.encode('utf-8')
         except Exception as e:
             yield f"Error: {str(e)}".encode('utf-8')
     
-    return Response(generate(), content_type='text/plain')
+    return app.response_class(generate(), mimetype='text/csv')
 
 if __name__ == "__main__":
     app.run(debug=True)
