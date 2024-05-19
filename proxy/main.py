@@ -18,9 +18,10 @@ def post_message():
     def generate():
         try:
             for chunk in send_message(message):
-                yield chunk
+                # Ensure each chunk is encoded as bytes
+                yield chunk.encode('utf-8')
         except Exception as e:
-            yield f"Error: {str(e)}"
+            yield f"Error: {str(e)}".encode('utf-8')
     
     return Response(generate(), content_type='text/plain')
 
