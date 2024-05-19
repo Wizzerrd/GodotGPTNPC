@@ -18,7 +18,6 @@ def post_message():
     def generate():
         try:
             for chunk in send_message(message):
-                print(chunk)
                 # Ensure each chunk is encoded as bytes
                 yield chunk.encode('utf-8')
         except Exception as e:

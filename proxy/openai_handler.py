@@ -1,15 +1,16 @@
 import os
 from openai import OpenAI, AssistantEventHandler
 
+
 class EventHandler(AssistantEventHandler):
-    def on_text_created(self, text): pass
-        # print(f"\nassistant > ", flush=True)
+    def on_text_created(self, text): 
+        print(f"\nassistant > ", flush=True)
       
-    def on_text_delta(self, delta, snapshot): pass
-        # print(delta.value, end="", flush=True)
+    def on_text_delta(self, delta, snapshot): 
+        print(delta.value, end="", flush=True)
       
-    def on_tool_call_created(self, tool_call): pass
-        # print(f"\nassistant > {tool_call.type}\n", flush=True)
+    def on_tool_call_created(self, tool_call): 
+        print(f"\nassistant > {tool_call.type}\n", flush=True)
   
     def on_tool_call_delta(self, delta, snapshot):
         if delta.type == 'code_interpreter':
@@ -19,13 +20,13 @@ class EventHandler(AssistantEventHandler):
                 print(f"\n\noutput >", flush=True)
                 for output in delta.code_interpreter.outputs:
                     if output.type == "logs":
-                        print(f"\n{output.logs}", flush=True)
+                        print(f"{output.logs}", flush=True)
 
 client = OpenAI()
 client.api_key = os.environ["OPENAI_API_KEY"]
 
 assistant = client.beta.assistants.create(
-    name="Surveillance Agent",
+    name="Pirate",
     instructions="You are a pirate. Arr!",
     model="gpt-4o",
 )
@@ -38,7 +39,6 @@ def speech_to_text(audio_file_path):
         file=open(audio_file_path, "rb"),
         language="en"
     )
-    print(response)
     return response.text
 
 def send_message(message):
@@ -55,6 +55,5 @@ def send_message(message):
         event_handler=event_handler,
     ) as stream:
         for chunk in stream:
-            if hasattr(chunk.data, "delta"): 
+            if hasattr(chunk.data, "delta"):
                 yield chunk.data.delta.content[0].text.value
-                # print(chunk.data.delta.content[0].text.value)

@@ -46,7 +46,7 @@ func attempt_to_request(httpclient_status):
 		return
 	# When Eidolon backend pings httpclient, httpclient_status is set to HTTPClient.STATUS_CONNECTION_ERROR
 	# To remedy this, the httpclient reconnects via attempt_to_connect
-	if httpclient_status == HTTPClient.STATUS_CONNECTION_ERROR: attempt_to_connect()
+	if httpclient_status == HTTPClient.STATUS_CONNECTION_ERROR: await attempt_to_connect()
 	if httpclient_status == HTTPClient.STATUS_CONNECTED:
 		var err = httpclient.request(outgoing_request["method"], outgoing_request["url"], outgoing_request["headers"], outgoing_request["body"])
 		if err == OK:
@@ -65,7 +65,8 @@ func _process(delta):
 		
 	httpclient.poll()
 	var httpclient_status = httpclient.get_status()
-	print(httpclient_status)
+	
+	#print(httpclient_status)
 	if outgoing_request:
 		if !is_requested:
 			if !request_in_progress:
@@ -79,23 +80,11 @@ func _process(delta):
 		httpclient.poll()
 		var chunk = httpclient.read_response_body_chunk()
 		if(chunk.size() == 0):
+			is_requested = false
+			request_in_progress = false
 			return
 		else:
-			response_body = response_body + chunk
-			
-		var json = JSON.new()
-		var body = response_body.get_string_from_utf8()
-		if body:
-			var event_data = get_event_data(body)
-			print(body, event_data)
-			#if event_data.event != "keep-alive" or event_data.event != continue_internal:
-				#var result = event_data.data
-				#if response_body.size() > 0 and result: # stop here if the value doesn't parse
-					#response_body.resize(0)
-					#emit_signal("new_sse_event", headers, event_data.event, result)
-			#else:
-				#if event_data.event != continue_internal:
-					#response_body.resize(0)
+			print(chunk.get_string_from_utf8())
 
 func set_outgoing_request(method, url, headers, body):
 	if not outgoing_request:
