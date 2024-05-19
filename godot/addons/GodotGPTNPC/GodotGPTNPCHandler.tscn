@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://f5jjcry6wpic"]
+
+[ext_resource type="Script" path="res://addons/GodotGPTNPC/GodotGPTNPCHandler.gd" id="1_sxkc4"]
+
+[node name="GodotGPTNPCHandler" type="Node"]
+script = ExtResource("1_sxkc4")
