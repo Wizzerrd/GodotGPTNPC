@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from openai import OpenAI, AssistantEventHandler
 
 
@@ -22,6 +23,7 @@ class EventHandler(AssistantEventHandler):
                     if output.type == "logs":
                         print(f"{output.logs}", flush=True)
 
+load_dotenv()
 client = OpenAI()
 client.api_key = os.environ["OPENAI_API_KEY"]
 
