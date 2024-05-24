@@ -1,7 +1,6 @@
 import os
 from os import listdir
 from os.path import isfile, join
-import json
 
 from dotenv import load_dotenv
 from openai import OpenAI, AssistantEventHandler
@@ -30,13 +29,6 @@ load_dotenv()
 client = OpenAI()
 client.api_key = os.environ["OPENAI_API_KEY"]
 
-# assistant = client.beta.assistants.create(
-#     name="Pirate",
-#     instructions="You are a pirate. Arr!",
-#     model="gpt-4o",
-# )
-# thread = client.beta.threads.create()
-
 characters = {}
 
 def create_characters():
@@ -48,21 +40,20 @@ def create_characters():
             ref = file.split(".json")[0]
             character = client.beta.assistants.create(
                 name=ref,
-                instructions=data,
+                instructions=data.read(),
                 model="gpt-4o",
             )
-            characters[ref] = character
+            characters[ref] = {"assistant":character,"threads":[]}
 
-def speech_to_text(audio_file_path):
-    """Converts speech from an audio file to text using OpenAI's Whisper model."""
-    response = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=open(audio_file_path, "rb"),
-        language="en"
-    )
-    return response.text
+def create_thread_on_character(character_ref):
+    character = characters[character_ref]
+    thread = client.beta.threads.create()
+    character["threads"].append(thread)
 
-def send_message(message):
+def send_message_to_character(character_ref, message):
+    character = characters[character_ref]
+    thread = character["threads"][-1]
+    assistant = character["assistant"]
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
@@ -76,8 +67,22 @@ def send_message(message):
         event_handler=event_handler,
     ) as stream:
         for chunk in stream:
-            print(chunk)
+            # print(chunk)
             if hasattr(chunk.data, "delta"):
                 yield chunk.data.delta.content[0].text.value
 
-create_characters()
+def speech_to_text(audio_file_path):
+    """Converts speech from an audio file to text using OpenAI's Whisper model."""
+    response = client.audio.transcriptions.create(
+        model="whisper-1",
+        file=open(audio_file_path, "rb"),
+        language="en"
+    )
+    return response.text
+
+# TESTING
+# create_characters()
+# create_thread_on_character("pirate")
+# responses = send_message_to_character("pirate", "hello")
+# for response in responses:
+#     pass

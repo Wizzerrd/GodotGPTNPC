@@ -1,12 +1,12 @@
 from flask import Flask, request, Response, jsonify
-from openai_handler import send_message
+from openai_handler import send_message_to_character
 
 app = Flask(__name__)
 
 # Flask Generator Function
-def character_response_generator(message):
+def character_response_generator(character_name, message):
         try:
-            for chunk in send_message(message):
+            for chunk in send_message_to_character(character_name, message):
                 # Ensure each chunk is encoded as bytes
                 yield chunk.encode('utf-8')
         except Exception as e:
@@ -31,7 +31,7 @@ def character_messages_post(character_name):
     if not body or "message" not in body:
         return jsonify({"error": "No message in request"}), 422
     message = body["message"]
-    return app.response_class(character_response_generator(message), mimetype='text/csv')
+    return app.response_class(character_response_generator(character_name, message), mimetype='text/csv')
 
 # old
     
