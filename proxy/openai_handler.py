@@ -46,9 +46,11 @@ def create_characters():
             characters[ref] = {"assistant":character,"threads":[]}
 
 def create_thread_on_character(character_ref):
+    print(characters)
     character = characters[character_ref]
     thread = client.beta.threads.create()
     character["threads"].append(thread)
+    return ("Thread created successfully on ref " + character_ref, 200)
 
 def send_message_to_character(character_ref, message):
     character = characters[character_ref]
