@@ -34,7 +34,7 @@ characters = {}
 def create_characters():
     directory = "characters/"
     files = [f for f in listdir(directory) if isfile(join(directory, f))]
-    if not files:  return Exception("No files found", 404)
+    if not files:  return ("No files found", 404)
     for file in files:
         with open(directory+file, 'r') as data:
             ref = file.split(".yaml")[0]
@@ -53,10 +53,10 @@ def create_thread_on_character(character_ref):
     return ("Thread created successfully on ref " + character_ref, 200)
 
 def send_message_to_character(character_ref, message):
-    if not character_ref in characters: return Exception("Character ref not found for " + character_ref, 404)
+    if not character_ref in characters: return ("Character ref not found for " + character_ref, 404)
     character = characters[character_ref]
     threads = character["threads"]
-    if not threads: return Exception("No threads on character ref " + character_ref, 404)
+    if not threads: return ("No threads on character ref " + character_ref, 404)
     thread = character["threads"][-1]
     assistant = character["assistant"]
     client.beta.threads.messages.create(
