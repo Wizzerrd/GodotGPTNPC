@@ -28,10 +28,10 @@ def character_threads_get(character_name):
     pass
 
 def character_threads_post(character_name):
-    # try:
+    try:
         return create_thread_on_character(character_name)
-    # except Exception as e:
-    #     yield f"Error: {str(e)}".encode('utf-8')
+    except Exception as e:
+        yield f"Error: {str(e)}".encode('utf-8')
 
 @app.route("/characters/<path:character_name>/messages", methods=["POST", "GET"])
 def character_messages_handler(character_name):
