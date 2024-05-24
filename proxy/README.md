@@ -1,4 +1,4 @@
-```python -m flask --app ./main.py run```
+```python -m flask --app ./routes.py run```
 
 ### Windows
 

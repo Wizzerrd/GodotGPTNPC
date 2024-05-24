@@ -19,8 +19,8 @@ def hello_world():
 @app.route("/characters/<character_name>/messages", methods=["POST", "GET"])
 def character_messages_handler(character_name):
     match request.method:
-        case "POST": character_messages_post(character_name)
-        case "GET": character_messages_get(character_name)
+        case "POST": return character_messages_post(character_name)
+        case "GET": return character_messages_get(character_name)
         case _: return jsonify({"error": f"Invalid HTTP Method (Expected 'GET' or 'POST'. Got {request.method})"}), 422
 
 def character_messages_get(character_name):
