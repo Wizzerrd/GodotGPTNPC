@@ -89,28 +89,6 @@ func set_outgoing_request(method, url, headers, body):
 	var req = {"method":method, "url":url, "headers":headers, "body":body}
 	request_queue.enqueue(req)
 
-func get_event_data(body : String) -> Dictionary:
-	var json = JSON.new()
-	body = body.strip_edges()
-	var result = {}
-	var event_idx = body.find(event_tag)
-	if event_idx == -1:
-		result["event"] = continue_internal
-		return result
-	assert(event_idx != -1)
-	var data_idx = body.find(data_tag)
-	assert(data_idx != -1)
-	var event = body.substr(event_idx, data_idx)
-	event = event.replace(event_tag, "").strip_edges()
-	assert(event)
-	assert(event.length() > 0)
-	result["event"] = event
-	var data = body.right(-(data_idx + data_tag.length())).strip_edges()
-	assert(data)
-	assert(data.length() > 0)
-	result["data"] = JSON.parse_string(data)
-	return result
-
 func _exit_tree():
 	if httpclient:
 		httpclient.close()
