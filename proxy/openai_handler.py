@@ -72,7 +72,7 @@ def send_message_to_character(character_ref, message):
         event_handler=event_handler,
     ) as stream:
         for chunk in stream:
-            # print(chunk)
+            print(chunk)
             if hasattr(chunk.data, "delta"):
                 yield chunk.data.delta.content[0].text.value
 

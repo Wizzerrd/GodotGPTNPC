@@ -17,11 +17,10 @@ var port
 var use_ssl
 var verify_host
 var told_to_connect = false
-var outgoing_request = null
 var connection_in_progress = false
 var request_in_progress = false
-var is_requested = false
 var response_body = PackedByteArray()
+var request_queue = Queue.new()
 
 var process_id
 
@@ -48,10 +47,9 @@ func attempt_to_request(httpclient_status):
 	# To remedy this, the httpclient reconnects via attempt_to_connect
 	if httpclient_status == HTTPClient.STATUS_CONNECTION_ERROR: await attempt_to_connect()
 	if httpclient_status == HTTPClient.STATUS_CONNECTED:
+		var outgoing_request = request_queue.dequeue()
 		var err = httpclient.request(outgoing_request["method"], outgoing_request["url"], outgoing_request["headers"], outgoing_request["body"])
-		if err == OK:
-			outgoing_request = null
-			is_requested = true
+		if err == OK: request_in_progress = true
 
 func _process(delta):
 	if !told_to_connect:
@@ -65,13 +63,10 @@ func _process(delta):
 		
 	httpclient.poll()
 	var httpclient_status = httpclient.get_status()
-	
-	#print(httpclient_status)
-	if outgoing_request:
-		if !is_requested:
+
+	if not request_queue.empty():
 			if !request_in_progress:
 				attempt_to_request(httpclient_status)
-			return
 		
 	var httpclient_has_response = httpclient.has_response()
 		
@@ -80,15 +75,19 @@ func _process(delta):
 		httpclient.poll()
 		var chunk = httpclient.read_response_body_chunk()
 		if(chunk.size() == 0):
-			is_requested = false
-			request_in_progress = false
 			return
 		else:
-			print(chunk.get_string_from_utf8())
+			var body = JSON.parse_string(chunk.get_string_from_utf8())
+			var stream_status = body["stream-status"]
+			var contents = body["contents"]
+			print(contents)
+			if stream_status == "stopping":
+				request_in_progress = false
+
 
 func set_outgoing_request(method, url, headers, body):
-	if not outgoing_request:
-		outgoing_request = {"method":method, "url":url, "headers":headers, "body":body}
+	var req = {"method":method, "url":url, "headers":headers, "body":body}
+	request_queue.enqueue(req)
 
 func get_event_data(body : String) -> Dictionary:
 	var json = JSON.new()

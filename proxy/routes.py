@@ -1,4 +1,5 @@
-from flask import Flask, request, Response, jsonify
+import json
+from flask import Flask, request, jsonify
 from openai_handler import create_characters, send_message_to_character, create_thread_on_character
 
 app = Flask(__name__)
@@ -7,9 +8,11 @@ create_characters()
 # Flask Generator Function
 def character_response_generator(character_name, message):
         try:
+            yield json.dumps({"stream-status":"starting", "contents":f"stream started for {character_name}"})
             for chunk in send_message_to_character(character_name, message):
                 # Ensure each chunk is encoded as bytes
-                yield chunk.encode('utf-8')
+                yield json.dumps({"stream-status":"streaming", "contents":chunk})
+            yield json.dumps({"stream-status":"stopping", "contents":f"stream stopping for {character_name}"})
         except Exception as e:
             yield f"Error: {str(e)}".encode('utf-8')
 
@@ -45,4 +48,4 @@ def character_messages_post(character_name):
     if not body or "message" not in body:
         return jsonify({"error": "No message in request"}), 422
     message = body["message"]
-    return app.response_class(character_response_generator(character_name, message), mimetype='text/csv')
+    return app.response_class(character_response_generator(character_name, message), mimetype='application/json')
