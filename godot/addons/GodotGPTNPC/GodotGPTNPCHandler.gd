@@ -37,8 +37,6 @@ func attempt_to_connect():
 func attempt_to_request(httpclient_status):
 	if httpclient_status == HTTPClient.STATUS_CONNECTING or httpclient_status == HTTPClient.STATUS_RESOLVING:
 		return
-	# When Eidolon backend pings httpclient, httpclient_status is set to HTTPClient.STATUS_CONNECTION_ERROR
-	# To remedy this, the httpclient reconnects via attempt_to_connect
 	if httpclient_status == HTTPClient.STATUS_CONNECTION_ERROR: 
 		is_connected = false
 		attempt_to_connect()
