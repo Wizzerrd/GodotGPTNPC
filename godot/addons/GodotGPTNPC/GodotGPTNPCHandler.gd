@@ -8,7 +8,6 @@ var httpclient = HTTPClient.new()
 var is_connected = false
 
 var domain
-var url_after_domain
 var port
 var use_ssl
 var verify_host
@@ -20,9 +19,8 @@ var request_queue = Queue.new()
 
 var process_id
 
-func connect_to_host(domain : String, url_after_domain : String, port : int = -1, use_ssl : bool = false, verify_host : bool = true):
+func connect_to_host(domain : String, port : int = -1, use_ssl : bool = false, verify_host : bool = true):
 	self.domain = domain
-	self.url_after_domain = url_after_domain
 	self.port = port
 	self.use_ssl = use_ssl
 	self.verify_host = verify_host
@@ -77,12 +75,19 @@ func _process(delta):
 			#return
 		else:
 			var body = JSON.parse_string(chunk.get_string_from_utf8())
-			var stream_status = body["stream-status"]
-			var contents = body["contents"]
-			print(contents)
-			if stream_status == "stopping":
-				request_in_progress = false
+			if "stream-status" in body:
+				var stream_status = body["stream-status"]
+				var content = body["content"]
+				print(content)
+				if stream_status == "stopping":
+					request_in_progress = false
 
+func send_character_message(character_ref, message, streaming=true):
+	var url = "http://" + domain +"/characters/" + character_ref + "/messages"
+	var body = JSON.stringify({"message":message, "streaming":streaming})
+	var headers = ["Content-Type: application/json", "Accept: text/event-stream"]
+	var method = HTTPClient.METHOD_POST
+	set_outgoing_request(method, url, headers, body)
 
 func set_outgoing_request(method, url, headers, body):
 	var req = {"method":method, "url":url, "headers":headers, "body":body}

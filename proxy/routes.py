@@ -6,13 +6,17 @@ app = Flask(__name__)
 create_characters()
 
 # Flask Generator Function
-def character_response_generator(character_name, message):
+def character_response_generator(character_name, message, streaming):
         try:
-            yield json.dumps({"stream-status":"starting", "contents":f"stream started for {character_name}"})
-            for chunk in send_message_to_character(character_name, message):
+            yield json.dumps({"stream-status":"starting", "content":f"stream started for {character_name}"})
+            for chunk in send_message_to_character(character_name, message, streaming):
+                if isinstance(chunk, dict): 
+                    yield json.dumps(chunk)
+                    # print(chunk)
+                else:
                 # Ensure each chunk is encoded as bytes
-                yield json.dumps({"stream-status":"streaming", "contents":chunk})
-            yield json.dumps({"stream-status":"stopping", "contents":f"stream stopping for {character_name}"})
+                    yield json.dumps({"stream-status":"streaming", "content":chunk})
+            yield json.dumps({"stream-status":"stopping", "content":f"stream stopping for {character_name}"})
         except Exception as e:
             yield f"Error: {str(e)}".encode('utf-8')
 
@@ -48,4 +52,5 @@ def character_messages_post(character_name):
     if not body or "message" not in body:
         return jsonify({"error": "No message in request"}), 422
     message = body["message"]
-    return app.response_class(character_response_generator(character_name, message), mimetype='application/json')
+    streaming = body["streaming"]
+    return app.response_class(character_response_generator(character_name, message, streaming), mimetype='application/json')

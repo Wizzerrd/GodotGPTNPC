@@ -52,7 +52,7 @@ def create_thread_on_character(character_ref):
     character["threads"].append(thread)
     return ("Thread created successfully on ref " + character_ref, 200)
 
-def send_message_to_character(character_ref, message):
+def send_message_to_character(character_ref, message, streaming):
     if not character_ref in characters: return ("Character ref not found for " + character_ref, 404)
     character = characters[character_ref]
     threads = character["threads"]
@@ -64,16 +64,32 @@ def send_message_to_character(character_ref, message):
         role="user",
         content=message
     )
-    event_handler = EventHandler()
-    with client.beta.threads.runs.stream(
-        thread_id=thread.id,
-        assistant_id=assistant.id,
-        instructions=assistant.instructions,
-        event_handler=event_handler,
-    ) as stream:
-        for chunk in stream:
-            if hasattr(chunk.data, "delta"):
-                yield chunk.data.delta.content[0].text.value
+    if streaming:
+        # event_handler = EventHandler()
+        with client.beta.threads.runs.stream(
+            thread_id=thread.id,
+            assistant_id=assistant.id,
+            instructions=assistant.instructions,
+            # event_handler=event_handler,
+        ) as stream:
+            for chunk in stream:
+                if hasattr(chunk.data, "delta"):
+                    yield chunk.data.delta.content[0].text.value
+    else:
+        run = client.beta.threads.runs.create_and_poll(
+            thread_id=thread.id,
+            assistant_id=assistant.id,
+            instructions=assistant.instructions
+        )
+        res = {}
+        if run.status == 'completed': 
+            messages = client.beta.threads.messages.list(
+                thread_id=thread.id
+            )
+            res["content"] = messages.data[0].content[0].text.value
+        else:  res["content"] = "Could not complete request to OpenAI"
+        res["stream-status"] = run.status
+        yield res
 
 def speech_to_text(audio_file_path):
     """Converts speech from an audio file to text using OpenAI's Whisper model."""
@@ -86,7 +102,10 @@ def speech_to_text(audio_file_path):
 
 # TESTING
 # create_characters()
-# create_thread_on_character("pirate")
+# create_thread_on_character("knight")
+# res = send_message_to_character("knight","greetings knight", False)
+# for p in res:
+#     pass
 # responses = send_message_to_character("pirate", "hello")
 # for response in responses:
 #     pass
