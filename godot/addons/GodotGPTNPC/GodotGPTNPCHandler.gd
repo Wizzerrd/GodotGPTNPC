@@ -4,10 +4,6 @@ signal new_sse_event(headers, event, data)
 signal connected
 signal connection_error(error)
 
-const event_tag = "id:"
-const data_tag = "data:"
-const continue_internal = "continue_internal"
-
 var httpclient = HTTPClient.new()
 var is_connected = false
 
@@ -17,7 +13,7 @@ var port
 var use_ssl
 var verify_host
 var told_to_connect = false
-var connection_in_progress = false
+var establishing_connection = false
 var request_in_progress = false
 var response_body = PackedByteArray()
 var request_queue = Queue.new()
@@ -35,17 +31,20 @@ func connect_to_host(domain : String, url_after_domain : String, port : int = -1
 func attempt_to_connect():
 	var err = httpclient.connect_to_host(domain, port)
 	if err == OK:
-		emit_signal("connected")
+		connected.emit()
+		establishing_connection = false
 		is_connected = true
-	else:
-		emit_signal("connection_error", str(err))
+	else: connection_error.emit(str(err))
 
 func attempt_to_request(httpclient_status):
 	if httpclient_status == HTTPClient.STATUS_CONNECTING or httpclient_status == HTTPClient.STATUS_RESOLVING:
 		return
 	# When Eidolon backend pings httpclient, httpclient_status is set to HTTPClient.STATUS_CONNECTION_ERROR
 	# To remedy this, the httpclient reconnects via attempt_to_connect
-	if httpclient_status == HTTPClient.STATUS_CONNECTION_ERROR: await attempt_to_connect()
+	if httpclient_status == HTTPClient.STATUS_CONNECTION_ERROR: 
+		is_connected = false
+		attempt_to_connect()
+		
 	if httpclient_status == HTTPClient.STATUS_CONNECTED:
 		var outgoing_request = request_queue.dequeue()
 		var err = httpclient.request(outgoing_request["method"], outgoing_request["url"], outgoing_request["headers"], outgoing_request["body"])
@@ -56,10 +55,9 @@ func _process(delta):
 		return
 		
 	if !is_connected:
-		if !connection_in_progress:
+		if !establishing_connection:
 			attempt_to_connect()
-			connection_in_progress = true
-		return
+			establishing_connection = true
 		
 	httpclient.poll()
 	var httpclient_status = httpclient.get_status()
@@ -75,7 +73,8 @@ func _process(delta):
 		httpclient.poll()
 		var chunk = httpclient.read_response_body_chunk()
 		if(chunk.size() == 0):
-			return
+			pass
+			#return
 		else:
 			var body = JSON.parse_string(chunk.get_string_from_utf8())
 			var stream_status = body["stream-status"]
