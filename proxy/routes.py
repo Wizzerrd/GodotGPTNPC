@@ -35,9 +35,9 @@ def character_threads_get(character_name):
 def character_threads_post(character_name):
     try:
         result, status_code = create_thread_on_character(character_name)
-        return jsonify({"message": result}), status_code
+        return jsonify({"message": result, "thread-status": "created"}), status_code
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "thread-status": "error"}), 500
 
 @app.route("/characters/<path:character_name>/messages", methods=["POST", "GET"])
 def character_messages_handler(character_name):

@@ -82,7 +82,13 @@ func stream_response(httpclient_status):
 			elif stream_status == "stopping":
 				stopped_character_response_stream.emit(body)
 				request_in_progress = false
-
+		elif "thread-status" in body:
+			if body["thread-status"] == "created":
+				print("Thread created successfully!")
+			elif body["thread-status"] == "error":
+				print("Error creating thread")
+			request_in_progress = false
+			
 func _process(delta):
 	if !check_if_connected(): return		
 	httpclient.poll()
@@ -102,6 +108,13 @@ func send_character_message(character_ref, message, streaming=true):
 	var url = "http://" + domain +"/characters/" + character_ref + "/messages"
 	var body = JSON.stringify({"message":message, "streaming":streaming})
 	var headers = ["Content-Type: application/json", "Accept: text/event-stream"]
+	var method = HTTPClient.METHOD_POST
+	set_outgoing_request(method, url, headers, body)
+
+func create_thread_on_character(character_ref):
+	var url = "http://" + domain +"/characters/" + character_ref + "/threads"
+	var body = ""
+	var headers = ["Content-Type: application/json"]
 	var method = HTTPClient.METHOD_POST
 	set_outgoing_request(method, url, headers, body)
 

@@ -10,6 +10,7 @@ func _ready():
 func _on_npc_start_conversation():
 	$Player.talking = true
 	$DialogueBox.show()
+	$GodotGPTNPCHandler.create_thread_on_character("knight")	
 
 func _on_npc_end_conversation():
 	$Player.talking = false
@@ -28,15 +29,15 @@ func _on_godot_gptnpc_handler_connection_error(error):
 
 func _on_godot_gptnpc_handler_started_character_response_stream(response):
 	$DialogueBox.add_message("Knight")
-	print(response)
+	#print(response)
 
 func _on_godot_gptnpc_handler_character_response_stream(response):
 	$DialogueBox.update_last_message(response["content"])
-	print(response)
+	#print(response)
 
 func _on_godot_gptnpc_handler_stopped_character_response_stream(response):
 	$DialogueBox.waiting = false
-	print(response)
+	#print(response)
 	
 
 
