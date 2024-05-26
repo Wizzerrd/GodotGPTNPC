@@ -1,9 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://c8pcy8cb43m83"]
+[gd_scene load_steps=7 format=3 uid="uid://c8pcy8cb43m83"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_r3fuf"]
 [ext_resource type="PackedScene" uid="uid://b1bfyc86om0q3" path="res://world.tscn" id="1_wimlu"]
 [ext_resource type="PackedScene" uid="uid://de01h04q55cgs" path="res://UI/dialogue_box.tscn" id="4_8ocqm"]
 [ext_resource type="PackedScene" uid="uid://f5jjcry6wpic" path="res://addons/GodotGPTNPC/GodotGPTNPCHandler.tscn" id="4_jrqcv"]
+[ext_resource type="PackedScene" uid="uid://qxal2f8l7iuk" path="res://Player/player.tscn" id="5_jcbfj"]
+[ext_resource type="PackedScene" uid="uid://27i550khvkbd" path="res://NPC/npc.tscn" id="6_56pf7"]
 
 [node name="main" type="Node"]
 script = ExtResource("1_r3fuf")
@@ -14,8 +16,16 @@ script = ExtResource("1_r3fuf")
 
 [node name="GodotGPTNPCHandler" parent="." instance=ExtResource("4_jrqcv")]
 
+[node name="Player" parent="." instance=ExtResource("5_jcbfj")]
+
+[node name="NPC" parent="." instance=ExtResource("6_56pf7")]
+position = Vector2(0, -150)
+
+[connection signal="send_message" from="DialogueBox" to="." method="_on_dialogue_box_send_message"]
 [connection signal="character_response_stream" from="GodotGPTNPCHandler" to="." method="_on_godot_gptnpc_handler_character_response_stream"]
 [connection signal="connected" from="GodotGPTNPCHandler" to="." method="_on_godot_gptnpc_handler_connected"]
 [connection signal="connection_error" from="GodotGPTNPCHandler" to="." method="_on_godot_gptnpc_handler_connection_error"]
 [connection signal="started_character_response_stream" from="GodotGPTNPCHandler" to="." method="_on_godot_gptnpc_handler_started_character_response_stream"]
 [connection signal="stopped_character_response_stream" from="GodotGPTNPCHandler" to="." method="_on_godot_gptnpc_handler_stopped_character_response_stream"]
+[connection signal="end_conversation" from="NPC" to="." method="_on_npc_end_conversation"]
+[connection signal="start_conversation" from="NPC" to="." method="_on_npc_start_conversation"]

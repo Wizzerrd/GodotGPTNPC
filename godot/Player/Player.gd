@@ -4,11 +4,6 @@ extends CharacterBody2D
 ### Variables ###
 #################
 
-# Variable that holds a reference to the parent world node
-# Set from _ready
-# Object
-var world
-
 # Variable that holds an integer that determines the player's speed
 # int
 var speed = 80
@@ -22,9 +17,6 @@ var talking = false
 ### _ready() ###
 # Invoked when node is first instantiated.
 func _ready():
-	# assign parent node to world variable
-	world = get_parent()
-	world.player = self
 	_set_scale(1.5)
 
 ### _physics_process(delta: float) ###
@@ -38,12 +30,6 @@ func _physics_process(delta):
 ########################
 ### Custom Functions ###
 ########################
-
-### add_body_to_world(body) ###
-# Custom function invoked to add a body to the current game world's scene tree
-# Called from _ready, shoot, _on_mob_spawn_path_add_mob_to_world
-func add_body_to_world(body):
-	world.add_child(body)
 
 func _set_scale(incoming_scale):
 	var new_scale = Vector2(incoming_scale, incoming_scale)
