@@ -88,7 +88,7 @@ def send_message_to_character(character_ref, message, streaming):
             )
             res["content"] = messages.data[0].content[0].text.value
         else:  res["content"] = "Could not complete request to OpenAI"
-        res["stream-status"] = run.status
+        res["stream-status"] = 'streaming'
         yield res
 
 def speech_to_text(audio_file_path):
@@ -99,13 +99,3 @@ def speech_to_text(audio_file_path):
         language="en"
     )
     return response.text
-
-# TESTING
-# create_characters()
-# create_thread_on_character("knight")
-# res = send_message_to_character("knight","greetings knight", False)
-# for p in res:
-#     pass
-# responses = send_message_to_character("pirate", "hello")
-# for response in responses:
-#     pass

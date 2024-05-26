@@ -1,6 +1,9 @@
 extends Node
 
-signal new_sse_event(headers, event, data)
+signal started_character_response_stream(response)
+signal character_response_stream(response)
+signal stopped_character_response_stream(response)
+
 signal connected
 signal connection_error(error)
 
@@ -43,6 +46,7 @@ func check_if_connected():
 					$Timeout.stop()
 					is_connected = true
 					establishing_connection = false
+					connected.emit()
 				return
 	return true
 
@@ -70,12 +74,13 @@ func stream_response(httpclient_status):
 	var chunk = httpclient.read_response_body_chunk()
 	if(chunk.size() != 0):
 		var body = JSON.parse_string(chunk.get_string_from_utf8())
-		print(body)
 		if "stream-status" in body:
 			var stream_status = body["stream-status"]
 			var content = body["content"]
-			print(content)
-			if stream_status == "stopping":
+			if stream_status == "starting": started_character_response_stream.emit(body)
+			elif stream_status == "streaming": character_response_stream.emit(body)
+			elif stream_status == "stopping":
+				stopped_character_response_stream.emit(body)
 				request_in_progress = false
 
 func _process(delta):
@@ -116,3 +121,5 @@ func _notification(what):
 
 func _on_timeout():
 	timed_out = true # Replace with function body.
+	connection_error.emit("connection timed out")
+	
