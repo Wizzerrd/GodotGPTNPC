@@ -4,3 +4,8 @@
 
 [node name="GodotGPTNPCHandler" type="Node"]
 script = ExtResource("1_sxkc4")
+
+[node name="Timeout" type="Timer" parent="."]
+wait_time = 15.0
+
+[connection signal="timeout" from="Timeout" to="." method="_on_timeout"]
