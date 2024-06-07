@@ -11,12 +11,9 @@ def character_response_generator(character_name, message, streaming):
             yield json.dumps({"stream-status":"starting", "content":f"stream started for {character_name}", "character-ref":character_name})
             for chunk in send_message_to_character(character_name, message, streaming):
                 if isinstance(chunk, dict): 
-                    print(chunk)
                     chunk["character-ref"] = character_name
                     yield json.dumps(chunk)
-                    # print(chunk)
                 else:
-                # Ensure each chunk is encoded as bytes
                     yield json.dumps({"stream-status":"streaming", "content":chunk, "character-ref":character_name})
             yield json.dumps({"stream-status":"stopping", "content":f"stream stopping for {character_name}", "character-ref":character_name})
         except Exception as e:

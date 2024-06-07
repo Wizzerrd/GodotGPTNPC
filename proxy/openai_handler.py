@@ -1,9 +1,11 @@
 import os
+
+from postgres_handler import connect_to_db, add_character_to_table, add_memory_to_character_with_character
 from os import listdir
 from os.path import isfile, join
-
 from dotenv import load_dotenv
 from openai import OpenAI, AssistantEventHandler
+from openai.types.beta.assistant_stream_event import ThreadMessageCompleted, ThreadMessageDelta
 
 class EventHandler(AssistantEventHandler):
     def on_text_created(self, text): 
@@ -30,8 +32,11 @@ client = OpenAI()
 client.api_key = os.environ["OPENAI_API_KEY"]
 
 characters = {}
+conn = connect_to_db()
 
 def create_characters():
+    try: add_character_to_table("player")
+    except: print("Ref already in table: player")
     directory = "characters/"
     files = [f for f in listdir(directory) if isfile(join(directory, f))]
     if not files:  return ("No files found", 404)
@@ -44,7 +49,8 @@ def create_characters():
                 model="gpt-4o",
             )
             characters[ref] = {"assistant":character,"threads":[]}
-            
+            try: add_character_to_table(ref)
+            except: print("Ref already in table: ", (ref))
 
 def create_thread_on_character(character_ref):
     if not character_ref in characters:  return ("Character ref not found for " + character_ref, 404)
@@ -65,6 +71,7 @@ def send_message_to_character(character_ref, message, streaming):
         role="user",
         content=message
     )
+    res = {"character_ref":character_ref, "stream-status":"streaming"}
     if streaming:
         # event_handler = EventHandler()
         with client.beta.threads.runs.stream(
@@ -74,29 +81,44 @@ def send_message_to_character(character_ref, message, streaming):
             # event_handler=event_handler,
         ) as stream:
             for chunk in stream:
-                if hasattr(chunk.data, "delta"):
-                    yield chunk.data.delta.content[0].text.value
+                if isinstance(chunk, ThreadMessageDelta) and hasattr(chunk.data, "delta"):
+                    delta = chunk.data.delta.content[0].text.value
+                    res["content"] = delta
+                    yield res
+                if isinstance(chunk, ThreadMessageCompleted):
+                    # weird shit going on right here
+                    try:
+                        add_memory_to_character_with_character(conn, {
+                            "pov_character_ref": character_ref,
+                            "oth_character_ref": "player",
+                            "thread_id": len(threads)-1,
+                            "speaking": True,
+                            "content": chunk.data.content[0].text.value,
+                            "embedding": client.embeddings.create(input=message, model="text-embedding-3-small")
+                        })
+                    except:
+                        pass
+                    
     else:
+        message = ""
         run = client.beta.threads.runs.create_and_poll(
             thread_id=thread.id,
             assistant_id=assistant.id,
             instructions=assistant.instructions
         )
-        res = {}
         if run.status == 'completed': 
             messages = client.beta.threads.messages.list(
                 thread_id=thread.id
             )
-            res["content"] = messages.data[0].content[0].text.value
+            message = messages.data[0].content[0].text.value
+            res["content"] = message
+            add_memory_to_character_with_character(conn, {
+                "pov_character_ref": character_ref,
+                "oth_character_ref": "player",
+                "thread_id": len(threads)-1,
+                "speaking": True,
+                "content": message,
+                "embedding": client.embeddings.create(input=message, model="text-embedding-3-small")
+            })
         else:  res["content"] = "Could not complete request to OpenAI"
-        res["stream-status"] = 'streaming'
         yield res
-
-def speech_to_text(audio_file_path):
-    """Converts speech from an audio file to text using OpenAI's Whisper model."""
-    response = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=open(audio_file_path, "rb"),
-        language="en"
-    )
-    return response.text
