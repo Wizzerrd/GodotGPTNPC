@@ -44,6 +44,7 @@ def create_characters():
                 model="gpt-4o",
             )
             characters[ref] = {"assistant":character,"threads":[]}
+            
 
 def create_thread_on_character(character_ref):
     if not character_ref in characters:  return ("Character ref not found for " + character_ref, 404)
