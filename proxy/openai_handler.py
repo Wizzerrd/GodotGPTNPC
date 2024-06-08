@@ -1,6 +1,6 @@
 import os
 
-from postgres_handler import connect_to_db, add_character_to_table, add_memory_to_character_with_character
+from postgres_handler import connect_to_db, add_character_to_table, add_memory_to_character_with_character, retrieve_relevant_memories
 from os import listdir
 from os.path import isfile, join
 from dotenv import load_dotenv
@@ -49,7 +49,7 @@ def create_characters():
                 model="gpt-4o",
             )
             characters[ref] = {"assistant":character,"threads":[]}
-            try: add_character_to_table(ref)
+            try: add_character_to_table(conn, ref)
             except: print("Ref already in table: ", (ref))
 
 def create_thread_on_character(character_ref):
@@ -66,10 +66,22 @@ def send_message_to_character(character_ref, message, streaming):
     if not threads: return ("No threads on character ref " + character_ref, 404)
     thread = character["threads"][-1]
     assistant = character["assistant"]
+    add_memory_to_character_with_character(conn, {
+                        "pov_character_ref": character_ref,
+                        "oth_character_ref": "player",
+                        "thread_id": len(threads)-1,
+                        "speaking": False,
+                        "content": message,
+                        "embedding": client.embeddings.create(input="player: " + message, model="text-embedding-3-small").data[0].embedding
+                    })
+    memories = retrieve_relevant_memories()
+    prompt = "Incoming Message: " + message + "\n" + "Relevant memories:\n"
+    for content, similarity in memories:
+        prompt += f"- {content} (Similarity: {similarity:.2f})\n"
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content=message
+        content=prompt
     )
     res = {"character_ref":character_ref, "stream-status":"streaming"}
     if streaming:
@@ -86,18 +98,15 @@ def send_message_to_character(character_ref, message, streaming):
                     res["content"] = delta
                     yield res
                 if isinstance(chunk, ThreadMessageCompleted):
-                    # weird shit going on right here
-                    try:
-                        add_memory_to_character_with_character(conn, {
-                            "pov_character_ref": character_ref,
-                            "oth_character_ref": "player",
-                            "thread_id": len(threads)-1,
-                            "speaking": True,
-                            "content": chunk.data.content[0].text.value,
-                            "embedding": client.embeddings.create(input=message, model="text-embedding-3-small")
-                        })
-                    except:
-                        pass
+                    add_memory_to_character_with_character(conn, {
+                        "pov_character_ref": character_ref,
+                        "oth_character_ref": "player",
+                        "thread_id": len(threads)-1,
+                        "speaking": True,
+                        "content": chunk.data.content[0].text.value,
+                        "embedding": client.embeddings.create(input=character_ref + ": " + message, model="text-embedding-3-small").data[0].embedding
+                    })
+
                     
     else:
         message = ""
@@ -118,7 +127,7 @@ def send_message_to_character(character_ref, message, streaming):
                 "thread_id": len(threads)-1,
                 "speaking": True,
                 "content": message,
-                "embedding": client.embeddings.create(input=message, model="text-embedding-3-small")
+                "embedding": client.embeddings.create(input=message, model="text-embedding-3-small").data[0].embedding
             })
         else:  res["content"] = "Could not complete request to OpenAI"
         yield res
