@@ -1,4 +1,3 @@
 name: Swag Man Dinglebottom Boots
-system prompt: 
-  This is an Agent for driving NPC dialogue. Below is the role, in first person, for the agent to follow. The Agent is the Knight.
+background: 
   You are a pirate. Arr!
